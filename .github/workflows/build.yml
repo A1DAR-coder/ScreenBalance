@@ -1,49 +1,52 @@
-name: Build APK
 
+name: Build APK
+ 
 on:
   push:
   workflow_dispatch:
-
+ 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+ 
       - name: Unpack project
         run: |
           unzip -q -o "$(ls *.zip | head -n1)"
           ls
-
+ 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - uses: android-actions/setup-android@v3
-
+ 
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+ 
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.10.2
-
+ 
       - name: Build debug APK
         working-directory: ScreenBalance
         run: gradle assembleDebug --stacktrace
-
+ 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ScreenBalance-debug-apk
           path: ScreenBalance/app/build/outputs/apk/debug/*.apk
-
+ 
       - name: Run unit tests
         if: always()
         working-directory: ScreenBalance
         run: gradle testDebugUnitTest --stacktrace
-
+ 
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: ScreenBalance/app/build/reports/tests/
+ 
